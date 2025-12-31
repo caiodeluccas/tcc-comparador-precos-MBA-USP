@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      # ESTAS DUAS LINHAS SÃO NOVAS:
+      WRITER_PASSWORD: ${WRITER_PASSWORD}
+      READER_PASSWORD: ${READER_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d  # Garante que lerá o 01, 02... e o 99
+    networks:
+      - price_comp_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  coletor_dados:
+    build:
+      context: ./microservico_coletor
+      dockerfile: Dockerfile
+    container_name: coletor_dados_app
+    restart: always
+    environment:
+      # MUDANÇA AQUI: O coletor agora loga como pc_data_writer
+      DATABASE_URL: postgresql://pc_data_writer:${WRITER_PASSWORD}@db:5432/${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - price_comp_network
+  
+volumes:
+  postgres_data:
+
+networks:
+  price_comp_network:
+    driver: bridge
