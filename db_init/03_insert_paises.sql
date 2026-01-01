@@ -7,6 +7,7 @@ TRUNCATE TABLE countries CASCADE;
 -- 2. Cria a tabela temporária
 CREATE TEMP TABLE temp_countries_load(
     iso_2_key CHAR(2),
+    iso_3 CHAR(3),
     country_name VARCHAR(255),
     native_name TEXT,
     phone_code TEXT,
@@ -22,9 +23,10 @@ DELIMITER ','
 CSV HEADER;
 
 -- 4. Insere na tabela final
-INSERT INTO countries (iso_2_code, common_name, native_name, continent, base_currency)
+INSERT INTO countries (iso_2_code, iso_3_code, common_name, native_name, continent, base_currency)
 SELECT 
     iso_2_key,    -- Nome da coluna na temp
+    iso_3,        -- Nome da coluna na temp
     country_name, -- Nome da coluna na temp
     native_name,  -- Nome da coluna na temp
     continent_code, -- Nome da coluna na temp
