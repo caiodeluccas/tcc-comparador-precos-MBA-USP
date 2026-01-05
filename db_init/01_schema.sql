@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS sources (
     source_name VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Histórico de preços e salários coletados
+-- Histórico de preços e coletados
 CREATE TABLE IF NOT EXISTS price_history (
     id_history BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     sku VARCHAR(255) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     currency CHAR(3) NOT NULL,
     collection_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_salary_year UNIQUE (id_country, id_indicator, reference_year),
+    CONSTRAINT uq_product_price_unique UNIQUE (sku, id_country, id_source, collection_timestamp)
 
     CONSTRAINT fk_history_product
         FOREIGN KEY (sku) REFERENCES products(sku),

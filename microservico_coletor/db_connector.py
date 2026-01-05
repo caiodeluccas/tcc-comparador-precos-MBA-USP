@@ -1,69 +1,100 @@
 import os
 import logging
-import psycopg2
-from urllib.parse import urlparse, unquote # Importação corrigida
+import requests
+import re
+from db_connector import get_connection
 
+# Configuração de logs
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# A string de conexão é lida APENAS UMA VEZ na inicialização do módulo
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# Configurações Canopy
+CANOPY_API_KEY = os.getenv("CANOPY_API_KEY")
+CANOPY_URL = "https://graphql.canopyapi.co/"
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable not set.")
+# Mapeamento de Países (ID do seu banco vs Domínio Amazon)
+REGIONS = [
+    {"id_country": 1, "domain": "AMAZON_COM_BR", "currency": "BRL"},
+    {"id_country": 2, "domain": "AMAZON_COM",    "currency": "USD"},
+    {"id_country": 3, "domain": "AMAZON_ES",     "currency": "EUR"}
+]
 
-# Faz o parsing da URL
-result = urlparse(DATABASE_URL)
-
-# IMPORTANTE: unquote decodifica caracteres como @, !, * na senha
-DB_PARAMS = {
-    'database': result.path[1:],
-    'user': result.username,
-    'password': unquote(result.password) if result.password else None,
-    'host': result.hostname,
-    'port': result.port
-}
-
-def get_connection():
+def clean_price(display_price):
+    """Transforma '$199.00' em 199.00"""
+    if not display_price: return None
+    clean_value = re.sub(r'[^\d,.]', '', display_price)
     try:
-        conn = psycopg2.connect(**DB_PARAMS)
-        return conn
-    except psycopg2.Error as e:
-        logger.error(f"ERRO CRÍTICO: Falha ao conectar com o PostgreSQL. {e}")
-        raise SystemExit("Serviço Coletor encerrado. Verifique a conexão do DB.")
+        if ',' in clean_value and '.' in clean_value:
+            clean_value = clean_value.replace('.', '').replace(',', '.')
+        elif ',' in clean_value:
+            clean_value = clean_value.replace(',', '.')
+        return float(clean_value)
+    except:
+        return None
 
-def insert_data(table_name, columns, data_list):
-    conn = None
+def fetch_amazon_data(asin, domain):
+    """Consulta o Canopy com o formato exato do Playground"""
+    headers = {"API-KEY": CANOPY_API_KEY}
+    query = """
+    query GetProduct($asin: String!, $domain: AmazonDomain) {
+      amazonProduct(input: { asinLookup: { asin: $asin, domain: $domain } }) {
+        price {
+          display
+          value
+          currency
+        }
+      }
+    }
+    """
+    variables = {"asin": asin, "domain": domain}
+    
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cols_str = ", ".join(columns)
-        placeholders= ", ".join(["%s"] * len(columns))
-        sql = f"INSERT INTO {table_name} ({cols_str}) values ({placeholders})"
-        cursor.executemany(sql, data_list)
-        conn.commit()
-        return cursor.rowcount
-    except psycopg2.Error as e:
-        logger.error(f"Erro ao inserir dados na tabela {table_name}: {e}")
-        if conn:
-            conn.rollback()
-        return 0
-    finally:
-        if conn:
-            conn.close()
-
-def truncate_table(table_name):
-    conn = None
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;")
-        conn.commit()
-        logger.info(f"Table {table_name} truncated successfully.")
+        response = requests.post(CANOPY_URL, json={'query': query, 'variables': variables}, headers=headers)
+        data = response.json()
+        product = data.get('data', {}).get('amazonProduct')
+        
+        if product and product.get('price'):
+            p = product['price']
+            # Se 'value' for null (como no seu teste), usamos o 'display'
+            val = p.get('value') if p.get('value') else clean_price(p.get('display'))
+            cur = p.get('currency')
+            return val, cur
+        return None, None
     except Exception as e:
-        if conn:
-            conn.rollback()
-        logger.error(f"Failed to truncate table {table_name}: {e}")
-        raise
+        logger.error(f"Erro na API ({asin}): {e}")
+        return None, None
+
+def run_product_collector():
+    logger.info("Iniciando coleta de produtos...")
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+
+        #  Buscar produtos cadastrados
+        cur.execute("SELECT sku, product_name FROM products")
+        products = cur.fetchall()
+
+        for sku, name in products:
+            for reg in REGIONS:
+                logger.info(f"Coletando {name} em {reg['domain']}...")
+                price, currency = fetch_amazon_data(sku, reg['domain'])
+
+                if price:
+                    # Se a API não retornou a moeda, usamos a padrão da região
+                    final_currency = currency if currency else reg['currency']
+                    
+                    cur.execute("""
+                        INSERT INTO price_history (sku, id_source, id_country, price, currency)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT DO NOTHING
+                    """, (sku, 2, reg['id_country'], price, final_currency))
+                    
+        conn.commit()
+        logger.info("Coleta finalizada com sucesso!")
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Erro no job: {e}")
     finally:
-        if conn:
-            conn.close()
+        cur.close()
+        conn.close()
