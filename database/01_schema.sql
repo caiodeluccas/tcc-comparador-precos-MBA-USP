@@ -1,5 +1,3 @@
-ALTER ROLE pc_admin_user SET search_path TO public;
-
 -- Tabela de referência para os países
 CREATE TABLE IF NOT EXISTS countries (
     id_country SERIAL PRIMARY KEY,
@@ -32,8 +30,10 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- Cadastro de produtos
 CREATE TABLE IF NOT EXISTS products (
-    sku VARCHAR(255) PRIMARY KEY,
-    product_name VARCHAR(255) NOT NULL,
+    sku VARCHAR(255) PRIMARY KEY, -- ID fixo (ex: IPHONE_15_128)
+    product_name VARCHAR(255) NOT NULL, -- Nome padrão no sistema
+    search_code VARCHAR(50), -- O ASIN da Amazon (Identificador Global), ou codigo unico de outras fontes.
+    search_term VARCHAR(255), -- Termo de busca caso o ASIN falhe
     description TEXT,
     id_category INTEGER NOT NULL,
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     currency CHAR(3) NOT NULL,
     collection_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_product_price_unique UNIQUE (sku, id_country, id_source, collection_timestamp)
+    CONSTRAINT uq_product_price_unique UNIQUE (sku, id_country, id_source, collection_timestamp),
 
     CONSTRAINT fk_history_product
         FOREIGN KEY (sku) REFERENCES products(sku),
@@ -70,9 +70,10 @@ CREATE TABLE IF NOT EXISTS price_history (
 -- Tabela de indicadores (O catálogo do que você pode coletar)
 CREATE TABLE IF NOT EXISTS salary_indicators (
     id_indicator SERIAL PRIMARY KEY,
-    indicator_code VARCHAR(50) NOT NULL UNIQUE, -- Ex: EAR_4MTH_AVE
-    description VARCHAR(255),                   -- Ex: Salário médio mensal
-    unit VARCHAR(20)                            -- Ex: Horas, Dias, Meses
+    indicator_code VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    unit VARCHAR(20),
+    id_source INTEGER REFERENCES sources(id_source) -- Nova coluna com chave estrangeira
 );
 
 -- Tabela de histórico (Onde os valores reais moram)
@@ -104,6 +105,16 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
         FOREIGN KEY (id_country_origin) REFERENCES countries(id_country)
 );
 
+-- Tabela de Média de horas trabalhadas.
+CREATE TABLE IF NOT EXISTS country_stats (
+    id_stat SERIAL PRIMARY KEY,
+    id_country INTEGER REFERENCES countries(id_country),
+    id_indicator INTEGER REFERENCES salary_indicators(id_indicator),
+    value DECIMAL(12,2),
+    year INTEGER,
+    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabelas de staging
 CREATE TABLE IF NOT EXISTS staging_salary (
     iso_3_code CHAR(3),
@@ -112,3 +123,5 @@ CREATE TABLE IF NOT EXISTS staging_salary (
     reference_year INTEGER,
     currency CHAR(3)
 );
+
+

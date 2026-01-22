@@ -1,3 +1,4 @@
+# A linha version é opcional nas versões novas do Docker, mas mantive a 3.9
 version: "3.9"
 
 services:
@@ -9,14 +10,14 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      # ESTAS DUAS LINHAS SÃO NOVAS:
       WRITER_PASSWORD: ${WRITER_PASSWORD}
       READER_PASSWORD: ${READER_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db_init:/docker-entrypoint-initdb.d  # Garante que lerá o 01, 02... e o 99
+      # Aqui ele vai ler seus SQLs 01 a 08 e o 99_set_passwords.sh
+      - ./database:/docker-entrypoint-initdb.d
     networks:
       - price_comp_network
     healthcheck:
@@ -25,21 +26,36 @@ services:
       timeout: 5s
       retries: 5
 
-  coletor_dados:
+  data_collector:
     build:
-      context: ./microservico_coletor
+      context: ./collector
       dockerfile: Dockerfile
     container_name: coletor_dados_app
-    restart: always
+    restart: "no" # Mudamos para "no" para ele rodar o teste e parar, sem ficar reiniciando
     environment:
-      # MUDANÇA AQUI: O coletor agora loga como pc_data_writer
       DATABASE_URL: postgresql://pc_data_writer:${WRITER_PASSWORD}@db:5432/${DB_NAME}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: pc_data_writer
+      DB_PASS: ${WRITER_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
     networks:
       - price_comp_network
-  
+
+# COMENTAMOS TUDO ABAIXO PARA O TESTE
+# api_processor:
+#   build:
+#     context: .
+#     dockerfile: Dockerfile
+#   ... (removido para clareza)
+
+# frontend:
+#   build:
+#     context: ./frontend
+#   ... (removido para clareza)
+
 volumes:
   postgres_data:
 
