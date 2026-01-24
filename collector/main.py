@@ -1,7 +1,7 @@
 import logging
 import os
-import database.db_connector as db_connector
-from collector.job_salary import run_salary_collector
+import db_connector as db_connector
+from job_salary import run_salary_collector
 # from collector.job_products import run_product_collector 
 
 os.makedirs('logs', exist_ok=True)

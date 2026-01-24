@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from database.db_connector import get_connection
+from collector.db_connector import get_connection
 from processor.conf import SALARY_INDICATORS, ANALYSIS_CONFIG, PRODUCT_LIST, TARGET_COUNTRIES
 
 class DataEngine:

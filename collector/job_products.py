@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 import re
-from database.db_connector import get_connection
+from db_connector import get_connection
 
 # Configuração de logs
 logging.basicConfig(level=logging.INFO)

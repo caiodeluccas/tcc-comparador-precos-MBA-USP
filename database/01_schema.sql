@@ -89,7 +89,9 @@ CREATE TABLE IF NOT EXISTS salary_history (
 
     CONSTRAINT fk_salary_country FOREIGN KEY (id_country) REFERENCES countries(id_country),
     CONSTRAINT fk_salary_indicator FOREIGN KEY (id_indicator) REFERENCES salary_indicators(id_indicator),
-    CONSTRAINT fk_salary_source FOREIGN KEY (id_source) REFERENCES sources(id_source)
+    CONSTRAINT fk_salary_source FOREIGN KEY (id_source) REFERENCES sources(id_source),
+    
+    CONSTRAINT uq_salary_entry UNIQUE (id_country, id_indicator, reference_year)
 );
 
 
