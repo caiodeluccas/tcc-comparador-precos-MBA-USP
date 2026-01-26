@@ -6,46 +6,43 @@
 #2 transferring dockerfile: 658B done
 #2 DONE 0.0s
 
-#3 [auth] library/python:pull token for registry-1.docker.io
-#3 DONE 0.0s
+#3 [internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.5s
 
-#4 [internal] load metadata for docker.io/library/python:3.11-slim
-#4 DONE 1.1s
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
 
-#5 [internal] load .dockerignore
-#5 transferring context: 2B done
+#5 [1/6] FROM docker.io/library/python:3.11-slim@sha256:5be45dbade29bebd6886af6b438fd7e0b4eb7b611f39ba62b430263f82de36d2
 #5 DONE 0.0s
 
-#6 [1/6] FROM docker.io/library/python:3.11-slim@sha256:5be45dbade29bebd6886af6b438fd7e0b4eb7b611f39ba62b430263f82de36d2
+#6 [internal] load build context
+#6 transferring context: 5.03kB done
 #6 DONE 0.0s
 
-#7 [internal] load build context
-#7 transferring context: 225B done
-#7 DONE 0.0s
+#7 [4/6] COPY requirements.txt .
+#7 CACHED
 
-#8 [2/6] RUN apt-get update && apt-get install -y     libpq-dev     gcc     && rm -rf /var/lib/apt/lists/*
+#8 [3/6] WORKDIR /app
 #8 CACHED
 
-#9 [3/6] WORKDIR /app
+#9 [2/6] RUN apt-get update && apt-get install -y     libpq-dev     gcc     && rm -rf /var/lib/apt/lists/*
 #9 CACHED
 
-#10 [4/6] COPY requirements.txt .
+#10 [5/6] RUN pip install --no-cache-dir -r requirements.txt
 #10 CACHED
 
-#11 [5/6] RUN pip install --no-cache-dir -r requirements.txt
-#11 CACHED
+#11 [6/6] COPY . .
+#11 DONE 0.1s
 
-#12 [6/6] COPY . .
-#12 CACHED
+#12 exporting to image
+#12 exporting layers 0.0s done
+#12 writing image sha256:9a7dc800e9558977e10e5692e4370364e9de49fa1978532bba86b5af91754535 done
+#12 naming to docker.io/library/comparacao_precos-data_collector done
+#12 DONE 0.0s
 
-#13 exporting to image
-#13 exporting layers done
-#13 writing image sha256:3b28950526df06a674f23bd89d01a991444c00dcc79dd7d66e96f56b61de6d30 done
-#13 naming to docker.io/library/comparacao_precos-data_collector done
+#13 resolving provenance for metadata file
 #13 DONE 0.0s
-
-#14 resolving provenance for metadata file
-#14 DONE 0.0s
 Attaching to coletor_dados_app, postgres_db
 postgres_db  | The files belonging to this database system will be owned by user "postgres".
 postgres_db  | This user must also own the server process.
@@ -72,10 +69,10 @@ postgres_db  | Success. You can now start the database server using:
 postgres_db  | 
 postgres_db  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
 postgres_db  | 
-postgres_db  | waiting for server to start....2026-01-24 12:18:03.478 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
-postgres_db  | 2026-01-24 12:18:03.480 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
-postgres_db  | 2026-01-24 12:18:03.487 UTC [51] LOG:  database system was shut down at 2026-01-24 12:18:03 UTC
-postgres_db  | 2026-01-24 12:18:03.493 UTC [48] LOG:  database system is ready to accept connections
+postgres_db  | waiting for server to start....2026-01-26 11:48:13.575 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres_db  | 2026-01-26 11:48:13.577 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres_db  | 2026-01-26 11:48:13.587 UTC [51] LOG:  database system was shut down at 2026-01-26 11:48:13 UTC
+postgres_db  | 2026-01-26 11:48:13.593 UTC [48] LOG:  database system is ready to accept connections
 postgres_db  |  done
 postgres_db  | server started
 postgres_db  | CREATE DATABASE
@@ -139,7 +136,7 @@ postgres_db  | INSERT 0 10
 postgres_db  | 
 postgres_db  | 
 postgres_db  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/08_insert_products.sql
-postgres_db  | INSERT 0 11
+postgres_db  | INSERT 0 1
 postgres_db  | 
 postgres_db  | 
 postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/countries.csv
@@ -148,16 +145,40 @@ postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-
 postgres_db  | 
 postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/__init__.py\
 postgres_db  | 
-postgres_db  | 2026-01-24 12:18:04.053 UTC [48] LOG:  received fast shutdown request
-postgres_db  | waiting for server to shut down....2026-01-24 12:18:04.056 UTC [48] LOG:  aborting any active transactions
-postgres_db  | 2026-01-24 12:18:04.057 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
-postgres_db  | 2026-01-24 12:18:04.058 UTC [49] LOG:  shutting down
-postgres_db  | 2026-01-24 12:18:04.059 UTC [49] LOG:  checkpoint starting: shutdown immediate
-postgres_db  | 2026-01-24 12:18:04.212 UTC [49] LOG:  checkpoint complete: wrote 1003 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.109 s, sync=0.038 s, total=0.155 s; sync files=371, longest=0.008 s, average=0.001 s; distance=4725 kB, estimate=4725 kB; lsn=0/1990148, redo lsn=0/1990148
-postgres_db  | 2026-01-24 12:18:04.221 UTC [48] LOG:  database system is shut down
+postgres_db  | waiting for server to shut down...2026-01-26 11:48:14.186 UTC [48] LOG:  received fast shutdown request
+postgres_db  | .2026-01-26 11:48:14.188 UTC [48] LOG:  aborting any active transactions
+postgres_db  | 2026-01-26 11:48:14.190 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+postgres_db  | 2026-01-26 11:48:14.190 UTC [49] LOG:  shutting down
+postgres_db  | 2026-01-26 11:48:14.192 UTC [49] LOG:  checkpoint starting: shutdown immediate
+postgres_db  | 2026-01-26 11:48:14.341 UTC [49] LOG:  checkpoint complete: wrote 1003 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.110 s, sync=0.033 s, total=0.151 s; sync files=371, longest=0.003 s, average=0.001 s; distance=4722 kB, estimate=4722 kB; lsn=0/198F510, redo lsn=0/198F510
+postgres_db  | 2026-01-26 11:48:14.350 UTC [48] LOG:  database system is shut down
 postgres_db  |  done
 postgres_db  | server stopped
 postgres_db  | 
 postgres_db  | PostgreSQL init process complete; ready for start up.
 postgres_db  | 
+[Kcoletor_dados_app exited with code 0
+[Kcoletor_dados_app has been recreated
+coletor_dados_app  | INFO:__main__:Iniciando Microserviço Coletor
+coletor_dados_app  | INFO:__main__:Conexão com Banco de Dados: OK
+coletor_dados_app  | INFO:__main__:--- INICIANDO COLETA DE TESTE ---
+coletor_dados_app  | INFO:__main__:Coletando indicador: EAR_4MTH_SEX_CUR_NB_A
+coletor_dados_app  | INFO:job_salary:Iniciando coleta ILO para o indicador: EAR_4MTH_SEX_CUR_NB_A...
+coletor_dados_app  | INFO:db_connector:Table staging_salary truncated successfully.
+coletor_dados_app  | INFO:job_salary:Migração concluída com sucesso para a fonte 1!
+coletor_dados_app  | INFO:__main__:Coletando indicador: MWG_2MTH_SEX_CUR_NB_A
+coletor_dados_app  | INFO:job_salary:Iniciando coleta ILO para o indicador: MWG_2MTH_SEX_CUR_NB_A...
+coletor_dados_app  | WARNING:job_salary:Nenhum dado retornado para MWG_2MTH_SEX_CUR_NB_A
+coletor_dados_app  | INFO:__main__:Coletando indicador: QLS_HW_AVE_NB_A
+coletor_dados_app  | INFO:job_salary:Iniciando coleta ILO para o indicador: QLS_HW_AVE_NB_A...
+coletor_dados_app  | WARNING:job_salary:Nenhum dado retornado para QLS_HW_AVE_NB_A
+coletor_dados_app  | INFO:__main__:--- INICIANDO COLETA DE PREÇOS (AMAZON) ---
+coletor_dados_app  | INFO:job_products:Iniciando coleta de produtos via Canopy (Amazon)...
+coletor_dados_app  | INFO:job_products:Coletando iPhone 15 Apple 128GB (B0DGJ9B2T9) em br...
+coletor_dados_app  | ERROR:job_products:Erro na Canopy para br: Value "br" does not exist in "AmazonDomain" enum. Did you mean the enum value "BR" or "FR"?
+coletor_dados_app  | INFO:job_products:Coletando iPhone 15 Apple 128GB (B0DGJ9B2T9) em us...
+coletor_dados_app  | ERROR:job_products:Erro na Canopy para us: Value "us" does not exist in "AmazonDomain" enum. Did you mean the enum value "ES", "UK", or "US"?
+coletor_dados_app  | INFO:job_products:Coletando iPhone 15 Apple 128GB (B0DGJ9B2T9) em es...
+coletor_dados_app  | ERROR:job_products:Erro na Canopy para es: Value "es" does not exist in "AmazonDomain" enum. Did you mean the enum value "ES" or "US"?
+coletor_dados_app  | INFO:job_products:Coleta de preços finalizada!
 [Kcoletor_dados_app exited with code 0

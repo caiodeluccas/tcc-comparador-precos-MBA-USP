@@ -31,13 +31,14 @@ services:
       context: ./collector
       dockerfile: Dockerfile
     container_name: coletor_dados_app
-    restart: "no" # Mudamos para "no" para ele rodar o teste e parar, sem ficar reiniciando
+    restart: "no"
     environment:
       DATABASE_URL: postgresql://pc_data_writer:${WRITER_PASSWORD}@db:5432/${DB_NAME}
       DB_HOST: db
       DB_NAME: ${DB_NAME}
       DB_USER: pc_data_writer
       DB_PASS: ${WRITER_PASSWORD}
+      CANOPY_API_KEY: ${CANOPY_API_KEY} # Adicione esta linha exatamente assim
     depends_on:
       db:
         condition: service_healthy
