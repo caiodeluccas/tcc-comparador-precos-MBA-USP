@@ -12,30 +12,18 @@ logger = logging.getLogger(__name__)
 CANOPY_API_KEY = os.getenv("CANOPY_API_KEY")
 CANOPY_URL = "https://graphql.canopyapi.co/"
 
-# Mapeamento de Países (ID do seu banco vs Domínio Amazon)
-REGIONS = [
-    {"id_country": 1, "domain": "br", "currency": "BRL"},
-    {"id_country": 2, "domain": "us", "currency": "USD"},
-    {"id_country": 3, "domain": "es", "currency": "EUR"}
-]
-
 def clean_price(display_price):
     """Transforma '$199.00' em 199.00"""
     if not display_price: return None
-    # Remove tudo que não é dígito, vírgula ou ponto
     clean_value = re.sub(r'[^\d,.]', '', display_price)
     try:
-        # Lógica para tratar separadores de milhar e decimal
         if ',' in clean_value and '.' in clean_value:
-            # Caso como 1.200,50 -> 1200.50
             if clean_value.find('.') < clean_value.find(','):
                 clean_value = clean_value.replace('.', '').replace(',', '.')
-            # Caso como 1,200.50 -> 1200.50
             else:
                 clean_value = clean_value.replace(',', '')
         elif ',' in clean_value:
             clean_value = clean_value.replace(',', '.')
-        
         return float(clean_value)
     except Exception as e:
         logger.error(f"Erro ao limpar preço '{display_price}': {e}")
@@ -51,7 +39,7 @@ def fetch_amazon_data(asin, domain):
         "API-KEY": CANOPY_API_KEY.strip()
     }
 
-    # Query simplificada e com o domínio injetado sem aspas (como um ENUM)
+    # Query usando o domínio como ENUM (sem aspas)
     query = """
     query {
       amazonProduct(input: { asinLookup: { asin: "%s", domain: %s } }) {
@@ -68,7 +56,6 @@ def fetch_amazon_data(asin, domain):
         response = requests.post(CANOPY_URL, json={'query': query}, headers=headers, timeout=20)
         data = response.json()
         
-        # Se houver erro na resposta, o log vai nos mostrar
         if "errors" in data:
             logger.error(f"Erro na Canopy para {domain}: {data['errors'][0]['message']}")
             return None, None
@@ -86,7 +73,7 @@ def fetch_amazon_data(asin, domain):
         return None, None
     
 def run_product_collector():
-    logger.info("Iniciando coleta de produtos via Canopy (Amazon)...")
+    logger.info("Iniciando coleta de produtos Versão 2 (Mapeamento Global)...")
     conn = get_connection()
     if not conn:
         logger.error("Falha ao conectar no banco de dados.")
@@ -94,40 +81,57 @@ def run_product_collector():
 
     cur = conn.cursor()
 
+    # Dicionário para converter ID do banco no Domínio da API
+    # 1: Brasil (BR), 2: EUA (US), 3: Espanha (ES)
+    id_to_domain = {1: "BR", 2: "US", 3: "ES"}
+
     try:
-        # BUSCA: sku (id interno) e search_code (ASIN para a API)
-        cur.execute("SELECT sku, search_code, product_name FROM products")
-        products = cur.fetchall()
+        # A MUDANÇA ESTÁ AQUI: Buscamos o ASIN específico de cada país na nova tabela
+        query = """
+            SELECT 
+                p.sku, 
+                pa.search_code, 
+                p.product_name, 
+                pa.id_country 
+            FROM products p
+            JOIN product_asins pa ON p.sku = pa.sku
+        """
+        cur.execute(query)
+        tasks = cur.fetchall()
 
-        for sku, search_code, name in products:
-            for reg in REGIONS:
-                # Se não houver search_code, pula
-                if not search_code:
-                    logger.warning(f"Produto {name} não possui search_code (ASIN) cadastrado.")
-                    continue
+        if not tasks:
+            logger.warning("Nenhum mapeamento de produto encontrado na tabela product_asins.")
 
-                logger.info(f"Coletando {name} ({search_code}) em {reg['domain']}...")
+        for sku, asin, name, id_country in tasks:
+            domain = id_to_domain.get(id_country)
+            
+            if not domain:
+                logger.warning(f"ID de país {id_country} não possui mapeamento de domínio.")
+                continue
+
+            logger.info(f"Coletando {name} | País: {domain} | ASIN: {asin}")
+            
+            price, currency = fetch_amazon_data(asin, domain)
+
+            if price:
+                # O preço e a moeda vêm da API, se falhar usamos um padrão
+                final_currency = currency if currency else "USD"
                 
-                # Chamada da API usando o ASIN (search_code)
-                price, currency = fetch_amazon_data(search_code, reg['domain'])
-
-                if price:
-                    final_currency = currency if currency else reg['currency']
-                    
-                    # Inserção usando o SKU para manter a relação com a tabela 'products'
-                    cur.execute("""
-                        INSERT INTO price_history (sku, id_source, id_country, price, currency)
-                        VALUES (%s, %s, %s, %s, %s)
-                        ON CONFLICT (sku, id_country, id_source, collection_timestamp) DO NOTHING
-                    """, (sku, 2, reg['id_country'], price, final_currency))
-                    
-                    logger.info(f"Sucesso: {name} em {reg['domain']} -> {final_currency} {price}")
+                cur.execute("""
+                    INSERT INTO price_history (sku, id_source, id_country, price, currency)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (sku, 2, id_country, price, final_currency))
+                
+                logger.info(f"SUCESSO: {sku} em {domain} -> {final_currency} {price}")
+            else:
+                logger.warning(f"FALHA: {name} não encontrado em {domain} com ASIN {asin}")
                 
         conn.commit()
-        logger.info("Coleta de preços finalizada!")
+        logger.info("Coleta finalizada com sucesso!")
     except Exception as e:
         conn.rollback()
-        logger.error(f"Erro durante a execução do job de preços: {e}")
+        logger.error(f"Erro no coletor: {e}")
     finally:
         cur.close()
         conn.close()

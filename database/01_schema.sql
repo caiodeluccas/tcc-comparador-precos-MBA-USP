@@ -30,15 +30,12 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- Cadastro de produtos
 CREATE TABLE IF NOT EXISTS products (
-    sku VARCHAR(255) PRIMARY KEY, -- ID fixo (ex: IPHONE_15_128)
-    product_name VARCHAR(255) NOT NULL, -- Nome padrão no sistema
-    search_code VARCHAR(50), -- O ASIN da Amazon (Identificador Global), ou codigo unico de outras fontes.
-    search_term VARCHAR(255), -- Termo de busca caso o ASIN falhe
+    sku VARCHAR(255) PRIMARY KEY, 
+    product_name VARCHAR(255) NOT NULL, 
+    search_term VARCHAR(255), 
     description TEXT,
     id_category INTEGER NOT NULL,
-
-    CONSTRAINT fk_product_category
-        FOREIGN KEY (id_category) REFERENCES categories(id_category)
+    CONSTRAINT fk_product_category FOREIGN KEY (id_category) REFERENCES categories(id_category)
 );
 
 -- Fontes de dados (Ex: ILO, Yahoo Finance, etc)
@@ -92,6 +89,15 @@ CREATE TABLE IF NOT EXISTS salary_history (
     CONSTRAINT fk_salary_source FOREIGN KEY (id_source) REFERENCES sources(id_source),
     
     CONSTRAINT uq_salary_entry UNIQUE (id_country, id_indicator, reference_year)
+);
+
+
+-- Tabela de mapeamento
+CREATE TABLE IF NOT EXISTS product_asins (
+    sku VARCHAR(255) REFERENCES products(sku),
+    id_country INT REFERENCES countries(id_country),
+    search_code VARCHAR(50) NOT NULL,
+    PRIMARY KEY (sku, id_country)
 );
 
 
