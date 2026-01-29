@@ -6,11 +6,14 @@
 #2 transferring dockerfile: 658B done
 #2 DONE 0.0s
 
-#3 [auth] library/python:pull token for registry-1.docker.io
-#3 DONE 0.0s
+#3 [internal] load metadata for docker.io/library/python:3.11-slim
+#3 ...
 
-#4 [internal] load metadata for docker.io/library/python:3.11-slim
-#4 DONE 1.0s
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 1.1s
 
 #5 [internal] load .dockerignore
 #5 transferring context: 2B done
@@ -23,16 +26,16 @@
 #7 transferring context: 225B done
 #7 DONE 0.0s
 
-#8 [3/6] WORKDIR /app
+#8 [5/6] RUN pip install --no-cache-dir -r requirements.txt
 #8 CACHED
 
 #9 [2/6] RUN apt-get update && apt-get install -y     libpq-dev     gcc     && rm -rf /var/lib/apt/lists/*
 #9 CACHED
 
-#10 [4/6] COPY requirements.txt .
+#10 [3/6] WORKDIR /app
 #10 CACHED
 
-#11 [5/6] RUN pip install --no-cache-dir -r requirements.txt
+#11 [4/6] COPY requirements.txt .
 #11 CACHED
 
 #12 [6/6] COPY . .
@@ -72,10 +75,10 @@ postgres_db  | Success. You can now start the database server using:
 postgres_db  | 
 postgres_db  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
 postgres_db  | 
-postgres_db  | waiting for server to start....2026-01-27 11:21:26.976 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
-postgres_db  | 2026-01-27 11:21:26.979 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
-postgres_db  | 2026-01-27 11:21:26.988 UTC [51] LOG:  database system was shut down at 2026-01-27 11:21:26 UTC
-postgres_db  | 2026-01-27 11:21:26.994 UTC [48] LOG:  database system is ready to accept connections
+postgres_db  | waiting for server to start....2026-01-29 11:59:49.708 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres_db  | 2026-01-29 11:59:49.711 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres_db  | 2026-01-29 11:59:49.721 UTC [51] LOG:  database system was shut down at 2026-01-29 11:59:49 UTC
+postgres_db  | 2026-01-29 11:59:49.727 UTC [48] LOG:  database system is ready to accept connections
 postgres_db  |  done
 postgres_db  | server started
 postgres_db  | CREATE DATABASE
@@ -140,35 +143,26 @@ postgres_db  | INSERT 0 10
 postgres_db  | 
 postgres_db  | 
 postgres_db  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/08_insert_products.sql
-postgres_db  | TRUNCATE TABLE
-postgres_db  | 2026-01-27 11:21:27.603 UTC [77] ERROR:  insert or update on table "product_asins" violates foreign key constraint "product_asins_sku_fkey"
-postgres_db  | 2026-01-27 11:21:27.603 UTC [77] DETAIL:  Key (sku)=(IPHONE_17_PRO_MAX) is not present in table "products".
-postgres_db  | 2026-01-27 11:21:27.603 UTC [77] STATEMENT:  INSERT INTO product_asins (sku, id_country, search_code)
-postgres_db  | 	VALUES 
-postgres_db  | 	    -- iPhone 17 Pro Max (ASINs específicos por domínio)
-postgres_db  | 	    ('IPHONE_17_PRO_MAX', 1, 'B0FQJ2KJ9X'), -- Amazon BR
-postgres_db  | 	    ('IPHONE_17_PRO_MAX', 2, 'B0DGJ9B2T9'), -- Amazon US
-postgres_db  | 	    ('IPHONE_17_PRO_MAX', 3, 'B0CHX15PBX'), -- Amazon ES
-postgres_db  | 	    -- PlayStation 5 (Exemplo de ASIN que pode ser igual ou diferente)
-postgres_db  | 	    ('PS5_DISC', 1, 'B0CL61HW92'), 
-postgres_db  | 	    ('PS5_DISC', 2, 'B0CL61HW92'), 
-postgres_db  | 	    ('PS5_DISC', 3, 'B0CL61HW92')
-postgres_db  | 	ON CONFLICT (sku, id_country) DO UPDATE SET 
-postgres_db  | 	    search_code = EXCLUDED.search_code;
-[Kpostgres_db exited with code 3 (restarting)
+postgres_db  | INSERT 0 2
+postgres_db  | INSERT 0 6
 postgres_db  | 
-postgres_db  | PostgreSQL Database directory appears to contain a database; Skipping initialization
 postgres_db  | 
-postgres_db  | 2026-01-27 11:21:28.026 UTC [1] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
-postgres_db  | 2026-01-27 11:21:28.026 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
-postgres_db  | 2026-01-27 11:21:28.026 UTC [1] LOG:  listening on IPv6 address "::", port 5432
-postgres_db  | 2026-01-27 11:21:28.030 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
-postgres_db  | 2026-01-27 11:21:28.036 UTC [29] LOG:  database system was interrupted; last known up at 2026-01-27 11:21:26 UTC
-postgres_db  | 2026-01-27 11:21:28.132 UTC [29] LOG:  database system was not properly shut down; automatic recovery in progress
-postgres_db  | 2026-01-27 11:21:28.135 UTC [29] LOG:  redo starts at 0/14F2AD8
-postgres_db  | 2026-01-27 11:21:28.158 UTC [29] LOG:  invalid record length at 0/1995020: expected at least 24, got 0
-postgres_db  | 2026-01-27 11:21:28.158 UTC [29] LOG:  redo done at 0/1994F50 system usage: CPU: user: 0.00 s, system: 0.01 s, elapsed: 0.02 s
-postgres_db  | 2026-01-27 11:21:28.175 UTC [27] LOG:  checkpoint starting: end-of-recovery immediate wait
-postgres_db  | 2026-01-27 11:21:28.366 UTC [27] LOG:  checkpoint complete: wrote 1014 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.156 s, sync=0.030 s, total=0.194 s; sync files=356, longest=0.006 s, average=0.001 s; distance=4745 kB, estimate=4745 kB; lsn=0/1995020, redo lsn=0/1995020
-postgres_db  | 2026-01-27 11:21:28.372 UTC [1] LOG:  database system is ready to accept connections
+postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/countries.csv
+postgres_db  | 
+postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/country_translate_pt.csv
+postgres_db  | 
+postgres_db  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/__init__.py\
+postgres_db  | 
+postgres_db  | 2026-01-29 11:59:50.302 UTC [48] LOG:  received fast shutdown request
+postgres_db  | waiting for server to shut down....2026-01-29 11:59:50.304 UTC [48] LOG:  aborting any active transactions
+postgres_db  | 2026-01-29 11:59:50.306 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+postgres_db  | 2026-01-29 11:59:50.306 UTC [49] LOG:  shutting down
+postgres_db  | 2026-01-29 11:59:50.308 UTC [49] LOG:  checkpoint starting: shutdown immediate
+postgres_db  | 2026-01-29 11:59:50.466 UTC [49] LOG:  checkpoint complete: wrote 1009 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.115 s, sync=0.036 s, total=0.160 s; sync files=376, longest=0.004 s, average=0.001 s; distance=4746 kB, estimate=4746 kB; lsn=0/1995490, redo lsn=0/1995490
+postgres_db  | 2026-01-29 11:59:50.476 UTC [48] LOG:  database system is shut down
+postgres_db  |  done
+postgres_db  | server stopped
+postgres_db  | 
+postgres_db  | PostgreSQL init process complete; ready for start up.
+postgres_db  | 
 [Kcoletor_dados_app exited with code 0

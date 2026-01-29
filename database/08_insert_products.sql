@@ -1,19 +1,23 @@
--- Limpa para evitar erros de duplicidade em reinicializações
-TRUNCATE TABLE product_asins;
+-- 1. Inserindo o Produto Pai
+INSERT INTO products (sku, product_name, search_term, id_category)
+VALUES 
+    ('COCA_ZERO_12P', 'Coca-Cola Zero Sugar (12 Pack)', 'Coca-Cola Zero Sugar 12 Pack', 2),
+    ('HAVAIANAS_TOP', 'Havaianas Schuhe Top Black', 'Havaianas Top Black', 2)
+ON CONFLICT (sku) DO UPDATE SET 
+    product_name = EXCLUDED.product_name,
+    search_term = EXCLUDED.search_term;
 
--- Insere o mapeamento: SKU | ID_COUNTRY | ASIN
--- Países: 1 = Brasil, 2 = EUA, 3 = Espanha
+-- 2. Mapeamento de ASINs
 INSERT INTO product_asins (sku, id_country, search_code)
 VALUES 
-    -- iPhone 17 Pro Max (ASINs específicos por domínio)
-    ('IPHONE_17_PRO_MAX', 1, 'B0FQJ2KJ9X'), -- Amazon BR
-    ('IPHONE_17_PRO_MAX', 2, 'B0DGJ9B2T9'), -- Amazon US
-    ('IPHONE_17_PRO_MAX', 3, 'B0CHX15PBX'), -- Amazon ES
-
-    -- PlayStation 5 (Exemplo de ASIN que pode ser igual ou diferente)
-    ('PS5_DISC', 1, 'B0CL61HW92'), 
-    ('PS5_DISC', 2, 'B0CL61HW92'), 
-    ('PS5_DISC', 3, 'B0CL61HW92')
-
+    -- Mapeamento Coca-Cola Zero
+    ('COCA_ZERO_12P', 1, 'B0CKWDGDXJ'), -- BR
+    ('COCA_ZERO_12P', 2, 'B000OV0S84'), -- US
+    ('COCA_ZERO_12P', 3, 'B004MIB4OW'), -- ES
+    
+    -- Mapeamento Havaianas Top Black
+    ('HAVAIANAS_TOP', 1, 'B000YKO2LE'), -- BR
+    ('HAVAIANAS_TOP', 2, 'B000YKO2LE'), -- US
+    ('HAVAIANAS_TOP', 3, 'B09XJH7V2Y')  -- ES
 ON CONFLICT (sku, id_country) DO UPDATE SET 
     search_code = EXCLUDED.search_code;
