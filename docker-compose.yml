@@ -38,19 +38,32 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: pc_data_writer
       DB_PASS: ${WRITER_PASSWORD}
-      CANOPY_API_KEY: ${CANOPY_API_KEY} # Adicione esta linha exatamente assim
+      CANOPY_API_KEY: ${CANOPY_API_KEY}
     depends_on:
       db:
         condition: service_healthy
     networks:
       - price_comp_network
 
-# COMENTAMOS TUDO ABAIXO PARA O TESTE
-# api_processor:
-#   build:
-#     context: .
-#     dockerfile: Dockerfile
-#   ... (removido para clareza)
+  api_processor:
+      build:
+        context: .
+        dockerfile: ./processor/Dockerfile
+      container_name: processador_dados_app
+      ports:
+        - "8000:8000"
+      environment:
+        - DATABASE_URL=postgresql://pc_app_admin:LKNnuqhQ2Umv*W!7oYLJM4a0%40%23qqbm41@db:5432/price_comp
+        - PYTHONPATH=/app
+        - DB_HOST=db
+        - DB_NAME=price_comp
+        - DB_USER=pc_app_admin
+        - DB_PASS=LKNnuqhQ2Umv*W!7oYLJM4a0@#qqbm41
+      depends_on:
+        db:
+          condition: service_healthy
+      networks:
+        - price_comp_network
 
 # frontend:
 #   build:
