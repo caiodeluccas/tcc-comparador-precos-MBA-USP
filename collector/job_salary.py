@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 from db_connector import insert_data, get_connection, truncate_table
 
+# Apenas define o logger. A configuração (nível, arquivo, formato) vem do main.py
 logger = logging.getLogger(__name__)
 
 def run_salary_collector(indicator_id, id_source=1):
@@ -27,10 +28,8 @@ def run_salary_collector(indicator_id, id_source=1):
             return
 
         # 2. Filtragem Inteligente
-        # Filtro: Total por Sexo (SEX_T) para evitar duplicar por gênero
         mask = (df['sex'] == 'SEX_T')
         
-        # Se for indicador de Salário (EAR), filtramos por Moeda Local (CUR_TYPE_LCU)
         if 'EAR_' in indicator_id:
             if 'classif1' in df.columns:
                 mask = mask & (df['classif1'] == 'CUR_TYPE_LCU')
@@ -54,18 +53,18 @@ def run_salary_collector(indicator_id, id_source=1):
                 currency_label
             ))
 
-        # 4. Limpeza da Staging (Garante que não há lixo de coletas anteriores)
+        # 4. Limpeza da Staging
         truncate_table("staging_salary")
 
         # 5. Inserção na Staging
         columns = ['iso_3_code', 'indicator_code', 'salary_value', 'reference_year', 'currency']
         insert_data('staging_salary', columns, payload)
         
-        # 6. Migração para Tabela Final (Transformação e Carga)
+        # 6. Migração para Tabela Final
         migrate_salary_staging_to_final(id_source)
         
     except Exception as e:
-        logger.error(f"Erro na coleta de {indicator_id}: {e}", exc_info=True)
+        logger.error(f"Erro na coleta de {indicator_id}: {e}")
 
 def migrate_salary_staging_to_final(id_source):
     """
@@ -75,7 +74,6 @@ def migrate_salary_staging_to_final(id_source):
     try:
         cur = conn.cursor()
         
-        # Query com tratamento de strings (TRIM/UPPER) e suporte a conflitos (UPSERT)
         sql_join = """
             INSERT INTO salary_history (id_country, id_indicator, id_source, salary_value, currency, reference_year)
             SELECT 
@@ -96,10 +94,10 @@ def migrate_salary_staging_to_final(id_source):
         
         cur.execute(sql_join, (id_source,))
         conn.commit()
-        logger.info(f"Migração concluída com sucesso para a fonte {id_source}!")
+        logger.info(f"Sucesso: Dados de {id_source} migrados para a tabela final.")
         
     except Exception as e:
-        conn.rollback()
-        logger.error(f"Falha na migração de staging para final: {e}")
+        if conn: conn.rollback()
+        logger.error(f"Falha na migração: {e}")
     finally:
-        conn.close()
+        if conn: conn.close()

@@ -1,20 +1,21 @@
 import os
 import logging
 import psycopg2
-from urllib.parse import urlparse, unquote # Importação corrigida
+from urllib.parse import urlparse, unquote
 
+# Apenas define o logger. Ele herdará as configurações de salvamento em arquivo do main.py
 logger = logging.getLogger(__name__)
 
-# A string de conexão é lida APENAS UMA VEZ na inicialização do módulo
+# A string de conexão é lida na inicialização do módulo via variável de ambiente do Docker
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable not set.")
 
-# Faz o parsing da URL
+# Parsing da URL para extrair credenciais
 result = urlparse(DATABASE_URL)
 
-# IMPORTANTE: unquote decodifica caracteres como @, !, * na senha
+# unquote decodifica caracteres especiais na senha (ex: @ por %40)
 DB_PARAMS = {
     'database': result.path[1:],
     'user': result.username,
@@ -24,6 +25,7 @@ DB_PARAMS = {
 }
 
 def get_connection():
+    """Estabelece conexão com o PostgreSQL"""
     try:
         conn = psycopg2.connect(**DB_PARAMS)
         return conn
@@ -32,6 +34,7 @@ def get_connection():
         raise SystemExit("Serviço Coletor encerrado. Verifique a conexão do DB.")
 
 def insert_data(table_name, columns, data_list):
+    """Insere múltiplos registros de forma eficiente (Batch Insert)"""
     conn = None
     try:
         conn = get_connection()
@@ -52,17 +55,18 @@ def insert_data(table_name, columns, data_list):
             conn.close()
 
 def truncate_table(table_name):
+    """Limpa a tabela antes de novas cargas (útil para Staging)"""
     conn = None
     try:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;")
         conn.commit()
-        logger.info(f"Table {table_name} truncated successfully.")
+        logger.info(f"Tabela {table_name} limpa com sucesso (Truncate).")
     except Exception as e:
         if conn:
             conn.rollback()
-        logger.error(f"Failed to truncate table {table_name}: {e}")
+        logger.error(f"Falha ao limpar tabela {table_name}: {e}")
         raise
     finally:
         if conn:
