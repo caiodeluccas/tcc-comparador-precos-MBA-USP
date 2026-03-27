@@ -45,9 +45,9 @@ except Exception as e:
     logger.error(f"FALHA CRÍTICA NA CONEXÃO COM O BANCO: {e}")
     engine = None
 
-# --- FUNÇÃO AUXILIAR DE SERIALIZAÇÃO ---
 def serializar(dados):
     """Converte tipos científicos NumPy/Pandas para formatos JSON nativos."""
+    logger.info(f"Serializando tipo: {type(dados)}, valor: {dados}")  # ← linha temporária
     if isinstance(dados, pd.DataFrame):
         return dados.replace({np.nan: None}).to_dict(orient='records')
     if isinstance(dados, dict):
@@ -78,12 +78,12 @@ async def obter_relatorio_geral():
         logger.error(f"Erro no relatório geral: {e}")
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
-@app.get("/analise/pais/{country_id}", tags=["Consultas por Abrangência"])
-async def analise_por_pais(country_id: int):
-    logger.info(f"Requisição: Análise global para o país ID {country_id}.")
+@app.get("/analise/pais/{iso3}", tags=["Consultas por Abrangência"])
+async def analise_por_pais(iso3: str):
+    logger.info(f"Requisição: Análise global para o país {iso3}.")
     if not engine:
         raise HTTPException(status_code=500, detail="Motor offline.")
-    resultado = engine.get_full_analysis(sku=None, country_id=country_id)
+    resultado = engine.get_full_analysis(sku=None, iso3=iso3)
     return serializar(resultado)
 
 @app.get("/analise/produto/{sku}", tags=["Consultas por Abrangência"])
@@ -91,21 +91,18 @@ async def analise_por_produto(sku: str):
     logger.info(f"Requisição: Ranking global para o SKU {sku}.")
     if not engine:
         raise HTTPException(status_code=500, detail="Motor offline.")
-    resultado = engine.get_full_analysis(sku=sku, country_id=None)
+    resultado = engine.get_full_analysis(sku=sku, iso3=None)
     return serializar(resultado)
 
-@app.get("/analise/detalhada/{country_id}/{sku}", tags=["Consultas Específicas"])
-async def obter_analise_detalhada(country_id: int, sku: str):
-    logger.info(f"Requisição: Detalhes SKU {sku} no país ID {country_id}.")
+@app.get("/analise/detalhada/{iso3}/{sku}", tags=["Consultas Específicas"])
+async def obter_analise_detalhada(iso3: str, sku: str):
+    logger.info(f"Requisição: Detalhes SKU {sku} no país {iso3}.")
     if not engine:
         raise HTTPException(status_code=500, detail="Motor offline.")
-
-    resultado = engine.get_full_analysis(sku, country_id)
-    
+    resultado = engine.get_full_analysis(sku=sku, iso3=iso3)
     if isinstance(resultado, dict) and resultado.get("status") == "error":
-        logger.warning(f"Dados não encontrados para SKU {sku} e país {country_id}.")
+        logger.warning(f"Dados não encontrados para SKU {sku} e país {iso3}.")
         raise HTTPException(status_code=404, detail=resultado.get("message"))
-        
     return serializar(resultado)
 
 if __name__ == "__main__":

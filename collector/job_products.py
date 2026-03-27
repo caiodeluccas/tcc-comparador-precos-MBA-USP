@@ -35,6 +35,7 @@ def fetch_amazon_data(asin, domain):
     try:
         response = requests.post(CANOPY_URL, json={'query': query}, headers=headers, timeout=20)
         data = response.json()
+        logger.info(f"Canopy response para {asin}/{domain}: {data}")
         product = data.get('data', {}).get('amazonProduct')
         if product and product.get('price'):
             p = product['price']
@@ -49,18 +50,38 @@ def run_product_collector():
     logger.info("Iniciando coleta Canopy via Mapeamento Global...")
     conn = get_connection()
     cur = conn.cursor()
-    id_to_domain = {1: "BR", 2: "US", 3: "ES"}
+
     try:
-        cur.execute("SELECT p.sku, pa.search_code, p.product_name, pa.id_country FROM products p JOIN product_asins pa ON p.sku = pa.sku")
+        cur.execute("""
+            SELECT
+                p.sku,
+                pa.search_code,
+                p.product_name,
+                pa.id_country,
+                c.iso_2_code
+            FROM products p
+            JOIN product_asins pa ON p.sku = pa.sku
+            JOIN countries c ON c.id_country = pa.id_country
+        """)
         tasks = cur.fetchall()
-        for sku, asin, name, id_country in tasks:
-            domain = id_to_domain.get(id_country)
-            if not domain: continue
+
+        for sku, asin, name, id_country, iso_2_code in tasks:
+            domain = iso_2_code.upper()
+
             price, currency = fetch_amazon_data(asin, domain)
-            if price:
-                cur.execute("INSERT INTO price_history (sku, id_source, id_country, price, currency) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING", (sku, 2, id_country, price, currency or "USD"))
+
+            if price is not None:
+                cur.execute("""
+                    INSERT INTO price_history (sku, id_source, id_country, price, unit_label)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (sku, 2, id_country, price, currency or "USD"))
+
                 logger.info(f"SUCESSO: {sku} em {domain} -> {price}")
+            else:
+                logger.info(f"SEM PREÇO: {sku} em {domain} -> ASIN {asin}")
+
         conn.commit()
+
     finally:
         cur.close()
-        conn.close()

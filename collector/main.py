@@ -1,8 +1,8 @@
 import logging
 import os
-import db_connector as db_connector
-from job_salary import run_salary_collector
-from job_products import run_product_collector 
+import db_connector
+from job_labor import run_salary_collector
+from job_products import run_product_collector
 
 os.makedirs('logs', exist_ok=True)
 
@@ -20,11 +20,9 @@ logger = logging.getLogger(__name__)
 def run_sync_task():
     logger.info("--- INICIANDO EXECUÇÃO ÚNICA DE COLETA ---")
     
-    indicators = [
-        'EAR_4MTH_SEX_CUR_NB_A', 
-        'MWG_2MTH_SEX_CUR_NB_A', 
-        'QLS_HW_AVE_NB_A'        
-    ]
+    db_connector.truncate_table("staging_labor_indicators")
+    
+    indicators = db_connector.get_labor_indicators_by_source(1)
     
     for ind in indicators:
         try:

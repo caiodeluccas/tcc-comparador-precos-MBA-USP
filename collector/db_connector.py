@@ -3,19 +3,15 @@ import logging
 import psycopg2
 from urllib.parse import urlparse, unquote
 
-# Apenas define o logger. Ele herdará as configurações de salvamento em arquivo do main.py
 logger = logging.getLogger(__name__)
 
-# A string de conexão é lida na inicialização do módulo via variável de ambiente do Docker
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable not set.")
 
-# Parsing da URL para extrair credenciais
 result = urlparse(DATABASE_URL)
 
-# unquote decodifica caracteres especiais na senha (ex: @ por %40)
 DB_PARAMS = {
     'database': result.path[1:],
     'user': result.username,
@@ -40,8 +36,8 @@ def insert_data(table_name, columns, data_list):
         conn = get_connection()
         cursor = conn.cursor()
         cols_str = ", ".join(columns)
-        placeholders= ", ".join(["%s"] * len(columns))
-        sql = f"INSERT INTO {table_name} ({cols_str}) values ({placeholders})"
+        placeholders = ", ".join(["%s"] * len(columns))
+        sql = f"INSERT INTO {table_name} ({cols_str}) VALUES ({placeholders})"
         cursor.executemany(sql, data_list)
         conn.commit()
         return cursor.rowcount
@@ -68,6 +64,29 @@ def truncate_table(table_name):
             conn.rollback()
         logger.error(f"Falha ao limpar tabela {table_name}: {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
+
+def get_labor_indicators_by_source(id_source):
+    """Busca os códigos dos indicadores cadastrados para uma fonte"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT indicator_code
+            FROM labor_indicators
+            WHERE id_source = %s
+            ORDER BY id_indicator;
+        """, (id_source,))
+        rows = cur.fetchall()
+        indicators = [row[0] for row in rows]
+        logger.info(f"Foram encontrados {len(indicators)} indicadores para a source {id_source}.")
+        return indicators
+    except Exception as e:
+        logger.error(f"Erro ao buscar indicadores da fonte {id_source}: {e}")
+        return []
     finally:
         if conn:
             conn.close()

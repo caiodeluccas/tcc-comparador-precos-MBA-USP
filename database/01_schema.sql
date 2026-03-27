@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS countries (
     continent VARCHAR(50) NOT NULL,
     iso_2_code CHAR(2) NOT NULL UNIQUE,
     iso_3_code CHAR(3) NOT NULL UNIQUE,
-    base_currency CHAR(3) NOT NULL
+    base_unit_label CHAR(3) NOT NULL
 );
 
 -- Tabela de tradução para internacionalização dos nomes dos países
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     id_source INTEGER NOT NULL,
     id_country INTEGER NOT NULL,
     price NUMERIC(15, 2) NOT NULL,
-    currency CHAR(3) NOT NULL,
+    unit_label CHAR(3) NOT NULL,
     collection_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT uq_product_price_unique UNIQUE (sku, id_country, id_source, collection_timestamp),
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 );
 
 -- Tabela de indicadores (O catálogo do que você pode coletar)
-CREATE TABLE IF NOT EXISTS salary_indicators (
+CREATE TABLE IF NOT EXISTS labor_indicators (
     id_indicator SERIAL PRIMARY KEY,
     indicator_code VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(255),
@@ -74,21 +74,21 @@ CREATE TABLE IF NOT EXISTS salary_indicators (
 );
 
 -- Tabela de histórico (Onde os valores reais moram)
-CREATE TABLE IF NOT EXISTS salary_history (
+CREATE TABLE IF NOT EXISTS labor_indicators_history (
     id_salary BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_country INTEGER NOT NULL,
     id_indicator INTEGER NOT NULL,
     id_source INTEGER NOT NULL,
-    salary_value NUMERIC(15, 2) NOT NULL,
-    currency CHAR(3) NOT NULL,
+    indicator_value NUMERIC(15, 2) NOT NULL,
+    unit_label CHAR(3) NOT NULL,
     reference_year INTEGER NOT NULL,
     collection_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_salary_country FOREIGN KEY (id_country) REFERENCES countries(id_country),
-    CONSTRAINT fk_salary_indicator FOREIGN KEY (id_indicator) REFERENCES salary_indicators(id_indicator),
-    CONSTRAINT fk_salary_source FOREIGN KEY (id_source) REFERENCES sources(id_source),
+    CONSTRAINT fk_labor_country FOREIGN KEY (id_country) REFERENCES countries(id_country),
+    CONSTRAINT fk_labor_indicator FOREIGN KEY (id_indicator) REFERENCES labor_indicators(id_indicator),
+    CONSTRAINT fk_labor_source FOREIGN KEY (id_source) REFERENCES sources(id_source),
     
-    CONSTRAINT uq_salary_entry UNIQUE (id_country, id_indicator, reference_year)
+    CONSTRAINT uq_labor_entry UNIQUE (id_country, id_indicator, reference_year)
 );
 
 
@@ -101,35 +101,14 @@ CREATE TABLE IF NOT EXISTS product_asins (
 );
 
 
--- Tabela de taxas de câmbio
-CREATE TABLE IF NOT EXISTS exchange_rates (
-    id_exchange SERIAL PRIMARY KEY,
-    id_country_origin INTEGER NOT NULL,
-    target_currency CHAR(3) NOT NULL,
-    exchange_rate NUMERIC(12, 6) NOT NULL,
-    quote_date DATE DEFAULT CURRENT_DATE,
-
-    CONSTRAINT fk_exchange_country_origin
-        FOREIGN KEY (id_country_origin) REFERENCES countries(id_country)
-);
-
--- Tabela de Média de horas trabalhadas.
-CREATE TABLE IF NOT EXISTS country_stats (
-    id_stat SERIAL PRIMARY KEY,
-    id_country INTEGER REFERENCES countries(id_country),
-    id_indicator INTEGER REFERENCES salary_indicators(id_indicator),
-    value DECIMAL(12,2),
-    year INTEGER,
-    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Tabelas de staging
-CREATE TABLE IF NOT EXISTS staging_salary (
+CREATE TABLE IF NOT EXISTS staging_labor_indicators (
     iso_3_code CHAR(3),
     indicator_code TEXT,
-    salary_value NUMERIC,
+    indicator_value NUMERIC,
     reference_year INTEGER,
-    currency CHAR(3)
+    unit_label CHAR(3)
 );
 
 

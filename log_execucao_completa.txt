@@ -134,7 +134,7 @@ postgres_db  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-i
 postgres_db  | INSERT 0 2
 postgres_db  | 
 postgres_db  | 
-postgres_db  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/06_insert_salary_indicators.sql
+postgres_db  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/06_insert_labor_indicators.sql
 postgres_db  | INSERT 0 4
 postgres_db  | 
 postgres_db  | 
@@ -165,4 +165,5 @@ postgres_db  | server stopped
 postgres_db  | 
 postgres_db  | PostgreSQL init process complete; ready for start up.
 postgres_db  | 
-[Kcoletor_dados_app exited with code 0
+
+[Kcoletor_dados_app exited with code 0

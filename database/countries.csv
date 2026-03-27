@@ -1,4 +1,4 @@
-_key,iso3,name,native,phone/0,continent,capital,currency/0,languages/0,languages/1,languages/2,languages/3,partOf,continents/0,continents/1,currency/1,languages/4,currency/2,phone/1,phone/2,phone/3,userAssigned,languages/5,languages/6,languages/7,languages/8,languages/9,currency/3,currency/4,currency/5,currency/6,currency/7
+_key,iso3,name,native,phone/0,continent,capital,unit_label/0,languages/0,languages/1,languages/2,languages/3,partOf,continents/0,continents/1,unit_label/1,languages/4,unit_label/2,phone/1,phone/2,phone/3,userAssigned,languages/5,languages/6,languages/7,languages/8,languages/9,unit_label/3,unit_label/4,unit_label/5,unit_label/6,unit_label/7
 AD,AND,Andorra,Andorra,376,EU,Andorra la Vella,EUR,ca,,,,,,,,,,,,,,,,,,,,,,,
 AE,ARE,United Arab Emirates,دولة الإمارات العربية المتحدة,971,AS,Abu Dhabi,AED,ar,,,,,,,,,,,,,,,,,,,,,,,
 AF,AFG,Afghanistan,افغانستان,93,AS,Kabul,AFN,ps,fa,uz,tk,,,,,,,,,,,,,,,,,,,,

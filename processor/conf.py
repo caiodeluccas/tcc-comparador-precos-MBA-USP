@@ -3,7 +3,7 @@
 # ==========================================================
 # MAPEAMENTO DE INDICADORES DOS SALÁRIOS COLETADOS
 # ==========================================================
-SALARY_INDICATORS = {
+labor_indicators = {
     1: "min_hour",   # Salário Mínimo por Hora
     2: "avg_hour",   # Salário Médio por Hora
     3: "min_month",  # Salário Mínimo por Mês
