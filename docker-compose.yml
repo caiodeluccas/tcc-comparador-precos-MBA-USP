@@ -71,6 +71,25 @@ services:
     networks:
       - price_comp_network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_tcc_app
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_PROXY_TARGET: http://api_processor:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api_processor
+    networks:
+      - price_comp_network  
+
 volumes:
   postgres_data:
 
