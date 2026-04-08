@@ -1,7 +1,11 @@
 import { COUNTRIES } from "../data/catalog";
 import { useSortableData } from "../hooks/useSortableData";
 import type { AnalysisRow } from "../types/api";
-import { formatCurrency, formatHours, formatPercent } from "../utils/format";
+import {
+  formatCurrency,
+  formatHoursToHms,
+  formatPercent
+} from "../utils/format";
 import SortButton from "./SortButton";
 
 interface ProductCountriesTableProps {
@@ -99,8 +103,8 @@ function ProductCountriesTable({ rows }: ProductCountriesTableProps) {
                   <td>{formatCurrency(row.min_salary_month, country.currency)}</td>
                   <td>{formatPercent(row.price_pct_avg_salary)}</td>
                   <td>{formatPercent(row.price_pct_min_salary)}</td>
-                  <td>{formatHours(row.hours_needed_avg_salary)}</td>
-                  <td>{formatHours(row.hours_needed_min_salary)}</td>
+                  <td>{formatHoursToHms(row.hours_needed_avg_salary)}</td>
+                  <td>{formatHoursToHms(row.hours_needed_min_salary)}</td>
                 </tr>
               );
             })}
