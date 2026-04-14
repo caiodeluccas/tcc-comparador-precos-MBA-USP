@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURAÇÕES DO SCHEDULER
 # =========================
 TIMEZONE_NAME = os.getenv("COLLECTOR_TIMEZONE", "America/Sao_Paulo")
-CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "300"))  # 5 min
+CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "300"))
 
 # Produtos: semanal
 PRODUCTS_WEEKDAY = int(os.getenv("PRODUCTS_WEEKDAY", "0"))  # 0=segunda, 6=domingo
@@ -36,12 +36,14 @@ PRODUCTS_HOUR = int(os.getenv("PRODUCTS_HOUR", "3"))
 PRODUCTS_MINUTE = int(os.getenv("PRODUCTS_MINUTE", "0"))
 
 # Labor: mensal
-LABOR_DAY = int(os.getenv("LABOR_DAY", "1"))   # dia 1
+LABOR_DAY = int(os.getenv("LABOR_DAY", "1"))
 LABOR_HOUR = int(os.getenv("LABOR_HOUR", "4"))
 LABOR_MINUTE = int(os.getenv("LABOR_MINUTE", "0"))
 
 STATE_DIR = Path(os.getenv("STATE_DIR", "/app/state"))
 STATE_FILE = STATE_DIR / "collector_state.json"
+
+INITIAL_SYNC_ON_START = os.getenv("INITIAL_SYNC_ON_START", "true").lower() == "true"
 
 
 def get_now():
@@ -54,6 +56,7 @@ def ensure_state_dir():
 
 def load_state():
     ensure_state_dir()
+
     if not STATE_FILE.exists():
         return {
             "last_products_run": None,
@@ -142,8 +145,8 @@ def should_run_products(now: datetime, state: dict) -> bool:
     if not last_run_str:
         return True
 
-    last_run = datetime.fromisoformat(last_run_str)
-    if is_same_iso_week(last_run.astimezone(ZoneInfo(TIMEZONE_NAME)), now):
+    last_run = datetime.fromisoformat(last_run_str).astimezone(ZoneInfo(TIMEZONE_NAME))
+    if is_same_iso_week(last_run, now):
         return False
 
     return True
@@ -170,6 +173,28 @@ def should_run_labor(now: datetime, state: dict) -> bool:
     return True
 
 
+def bootstrap_initial_collection_if_needed():
+    state = load_state()
+
+    if not INITIAL_SYNC_ON_START:
+        logger.info("INITIAL_SYNC_ON_START desativado. Pulando coleta inicial.")
+        return
+
+    first_products_run = not state.get("last_products_run")
+    first_labor_run = not state.get("last_labor_run")
+
+    if first_products_run and first_labor_run:
+        logger.info("--- PRIMEIRA EXECUÇÃO DETECTADA: iniciando coleta inicial completa ---")
+        run_sync_task()
+        now = get_now()
+        state["last_products_run"] = now.isoformat()
+        state["last_labor_run"] = now.isoformat()
+        save_state(state)
+        logger.info("--- COLETA INICIAL COMPLETA FINALIZADA ---")
+    else:
+        logger.info("Estado anterior encontrado. Scheduler seguirá normalmente sem coleta inicial.")
+
+
 def run_scheduler():
     logger.info("--- SCHEDULER ATIVADO ---")
     logger.info(
@@ -178,6 +203,8 @@ def run_scheduler():
         f"Labor: day={LABOR_DAY} {LABOR_HOUR:02d}:{LABOR_MINUTE:02d} | "
         f"check_interval={CHECK_INTERVAL_SECONDS}s"
     )
+
+    bootstrap_initial_collection_if_needed()
 
     while True:
         state = load_state()

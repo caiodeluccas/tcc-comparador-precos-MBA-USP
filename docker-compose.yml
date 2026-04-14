@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -47,6 +45,7 @@ services:
       LABOR_HOUR: 4
       LABOR_MINUTE: 0
       STATE_DIR: /app/state
+      INITIAL_SYNC_ON_START: "true"
     volumes:
       - ./meus_logs_tcc:/app/logs
       - ./collector_state:/app/state
@@ -64,12 +63,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://pc_app_admin:LKNnuqhQ2Umv*W!7oYLJM4a0%40%23qqbm41@db:5432/price_comp
-      - PYTHONPATH=/app
-      - DB_HOST=db
-      - DB_NAME=price_comp
-      - DB_USER=pc_app_admin
-      - DB_PASS=LKNnuqhQ2Umv*W!7oYLJM4a0@#qqbm41
+      DATABASE_URL: postgresql://pc_app_admin:${APP_ADMIN_PASSWORD}@db:5432/${DB_NAME}
+      PYTHONPATH: /app
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: pc_app_admin
+      DB_PASS: ${APP_ADMIN_PASSWORD}
     volumes:
       - ./meus_logs_tcc:/app/logs
     depends_on:
