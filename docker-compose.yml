@@ -29,7 +29,7 @@ services:
       context: ./collector
       dockerfile: Dockerfile
     container_name: coletor_dados_app
-    restart: "no"
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://pc_data_writer:${WRITER_PASSWORD}@db:5432/${DB_NAME}
       DB_HOST: db
@@ -37,10 +37,19 @@ services:
       DB_USER: pc_data_writer
       DB_PASS: ${WRITER_PASSWORD}
       CANOPY_API_KEY: ${CANOPY_API_KEY}
-    # --- AJUSTE DOS LOGS ---
+      COLLECT_MODE: scheduler
+      COLLECTOR_TIMEZONE: America/Sao_Paulo
+      CHECK_INTERVAL_SECONDS: 300
+      PRODUCTS_WEEKDAY: 0
+      PRODUCTS_HOUR: 3
+      PRODUCTS_MINUTE: 0
+      LABOR_DAY: 1
+      LABOR_HOUR: 4
+      LABOR_MINUTE: 0
+      STATE_DIR: /app/state
     volumes:
       - ./meus_logs_tcc:/app/logs
-    # -----------------------
+      - ./collector_state:/app/state
     depends_on:
       db:
         condition: service_healthy
@@ -61,10 +70,8 @@ services:
       - DB_NAME=price_comp
       - DB_USER=pc_app_admin
       - DB_PASS=LKNnuqhQ2Umv*W!7oYLJM4a0@#qqbm41
-    # --- AJUSTE DOS LOGS ---
     volumes:
       - ./meus_logs_tcc:/app/logs
-    # -----------------------
     depends_on:
       db:
         condition: service_healthy
@@ -88,7 +95,7 @@ services:
     depends_on:
       - api_processor
     networks:
-      - price_comp_network  
+      - price_comp_network
 
 volumes:
   postgres_data:
