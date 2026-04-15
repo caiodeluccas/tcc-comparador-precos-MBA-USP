@@ -63,12 +63,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://pc_app_admin:${APP_ADMIN_PASSWORD}@db:5432/${DB_NAME}
+      DATABASE_URL: postgresql://pc_app_admin:${DB_PASSWORD_ENCODED}@db:5432/${DB_NAME}
       PYTHONPATH: /app
       DB_HOST: db
       DB_NAME: ${DB_NAME}
       DB_USER: pc_app_admin
-      DB_PASS: ${APP_ADMIN_PASSWORD}
+      DB_PASS: ${DB_PASSWORD}
     volumes:
       - ./meus_logs_tcc:/app/logs
     depends_on:
